@@ -11,6 +11,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -53,8 +54,6 @@ public class Transaction extends AppCompatActivity implements View.OnClickListen
     int endTime = 0;
     TimePicker picker;
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,26 +65,36 @@ public class Transaction extends AppCompatActivity implements View.OnClickListen
         picker=(TimePicker)findViewById(R.id.timePicker1);
         picker.setIs24HourView(true);
 
+        textView_userID = (TextView) findViewById(R.id.textView_userID);
+        textView_maximumTime = (TextView) findViewById(R.id.textView_maximumTime);
+
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             String value = extras.getString("key");
-
-
             String[] separated = value.split(",");
 
-            String uid[] = separated[1].split("=");
-
-            //The key argument here must match that used in the other activity
-            textView_userID = (TextView) findViewById(R.id.textView_userID);
-            textView_userID.setText("Your User ID: "+uid[1]);
-
-            textView_maximumTime = (TextView) findViewById(R.id.textView_maximumTime);
+            // Check if format of QR string is valid
+            // If yes parse User ID
+            // Otherwise go back to Main Activity
+            if (separated.length>1) {
+                String uid[] = separated[1].split("=");
+                if (uid.length>1) {
+                    textView_userID.setText("Your User ID: "+uid[1]);
+                }
+                else {
+                    Intent i = new Intent(Transaction.this, MainActivity.class);
+                    Toast.makeText(Transaction.this, "No valid parking slot",Toast.LENGTH_LONG).show();
+                    startActivity(i);
+                }
+            }
+            else {
+                Intent i = new Intent(Transaction.this, MainActivity.class);
+                Toast.makeText(Transaction.this, "No valid parking slot",Toast.LENGTH_LONG).show();
+                startActivity(i);
+            }
         }
-
-
-        // Perform HTTP Request for getting maximum parking time
+        // Perform HTTP Request for requesting maximum parking time
         new HTTPTask().execute();
-
     }
 
 
@@ -213,8 +222,11 @@ public class Transaction extends AppCompatActivity implements View.OnClickListen
                         // Otherwise use default address
                         if (address2.length()==91) {
                             address = address2;
-                            maximumTime=maximumTime2;
-
+                            int max = Integer.parseInt(maximumTime2);
+                            int hours = max/60/60;
+                            int minutes = max/60;
+                            if (hours<24)
+                                maximumTime=Integer.toString(hours) + " hours and " + Integer.toString(minutes) + "minutes";
                         }
                     }
                 }
