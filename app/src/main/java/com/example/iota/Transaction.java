@@ -50,7 +50,10 @@ public class Transaction extends AppCompatActivity implements View.OnClickListen
     private Button buttonTransaction;
 
     String address = "FNTWVFJINYFPRKTVEJ9PHDVWGPJCJSEMYIDORVZDVIGPMJYJDYHPHNIMSZVHY9XVEBMHMYRAIUWHAEEEDRGZCEFCPY";
+    String myAddress = "BJSMQCQJTOFJDPTLNYUSOSQAFYDBDBUONNISPSIKW9IASVHNTENZ9FBOLQDSH9MAPKNFUVOZRFAXCFBEBYDDTASOUD";
     String maximumTime = "24 hours";
+    int maximumHours = 24;
+    int maximumMinutes = 0;
     int endTime = 0;
     TimePicker picker;
 
@@ -110,6 +113,14 @@ public class Transaction extends AppCompatActivity implements View.OnClickListen
             hour = picker.getCurrentHour();
             minute = picker.getCurrentMinute();
         }
+        if (hour > maximumHours) {
+            Toast.makeText(Transaction.this,"Please select shorter time", Toast.LENGTH_LONG).show();
+            return;
+        }
+        else if (hour == maximumHours && minute > maximumMinutes) {
+            Toast.makeText(Transaction.this,"Please select shorter time", Toast.LENGTH_LONG).show();
+            return;
+        }
         endTime = minute*60+hour*60+60;
 
         int actualTime = (int) (System.currentTimeMillis());
@@ -134,6 +145,7 @@ public class Transaction extends AppCompatActivity implements View.OnClickListen
             int securityLevel = 2;
             int value = 1;
 
+
             JSONObject object = new JSONObject();
             try {
                 object.put("uid", "E24F43FFFE44C3FC");
@@ -154,18 +166,16 @@ public class Transaction extends AppCompatActivity implements View.OnClickListen
 
             long balance = 0;
             try {
-                balance = api.getBalance(100, address);
+                balance = api.getBalance(100, myAddress);
             } catch (ArgumentException e) {
                 // Handle error
                 e.printStackTrace();
             }
 
             // Do transaktion if enough balance is available
-            if (balance>=value) {
+            if (balance >= value) {
                 try {
-                    //System.out.printf("Sending 1 i to %s", address);
                     SendTransferResponse response = api.sendTransfer(mySeed, securityLevel, depth, minimumWeightMagnitude, transfers, null, null, false, false, null);
-                    //System.out.println(response.getTransactions());
                     resultString = "Transaction successfull";
                 } catch (ArgumentException e) {
                     // Handle error
@@ -225,8 +235,11 @@ public class Transaction extends AppCompatActivity implements View.OnClickListen
                             int max = Integer.parseInt(maximumTime2);
                             int hours = max/60/60;
                             int minutes = max/60;
-                            if (hours<24)
+                            if (hours<24) {
+                                maximumHours = hours;
+                                maximumMinutes = minutes;
                                 maximumTime=Integer.toString(hours) + " hours and " + Integer.toString(minutes) + "minutes";
+                            }
                         }
                     }
                 }
